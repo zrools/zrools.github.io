@@ -79,15 +79,15 @@
 
 
 
-<meta name="description" content="DzzOfficeDzzOffice 是一套开源办公套件。 官网： http:&#x2F;&#x2F;dzz.cc&#x2F; github： https:&#x2F;&#x2F;github.com&#x2F;zyx0814&#x2F;dzzoffice&#x2F;releases&#x2F; 版本： DzzOffice v2.02 漏洞分析其加解密模块大致和Discuz旧版本相同，同样存在authkey被爆破攻击，只是攻击方式略有不同。 authkey生成： 源文件： instal">
+<meta name="description" content="DzzOfficeDzzOffice 是一套开源办公套件。 官网： http:&#x2F;&#x2F;dzz.cc&#x2F; github： https:&#x2F;&#x2F;github.com&#x2F;zyx0814&#x2F;dzzoffice&#x2F;releases&#x2F; 版本： DzzOffice v2.02 漏洞分析其加解密模块大致和Discuz!旧版本相同，同样存在authkey被爆破攻击，只是攻击方式略有不同。 authkey生成： 源文件： insta">
 <meta property="og:type" content="article">
 <meta property="og:title" content="代码审计 | DzzOffice 伪随机数攻击">
 <meta property="og:url" content="http://yoursite.com/2020/03/16/%E4%BB%A3%E7%A0%81%E5%AE%A1%E8%AE%A1-DzzOffice-%E4%BC%AA%E9%9A%8F%E6%9C%BA%E6%95%B0%E6%94%BB%E5%87%BB/index.html">
 <meta property="og:site_name" content="zrools">
-<meta property="og:description" content="DzzOfficeDzzOffice 是一套开源办公套件。 官网： http:&#x2F;&#x2F;dzz.cc&#x2F; github： https:&#x2F;&#x2F;github.com&#x2F;zyx0814&#x2F;dzzoffice&#x2F;releases&#x2F; 版本： DzzOffice v2.02 漏洞分析其加解密模块大致和Discuz旧版本相同，同样存在authkey被爆破攻击，只是攻击方式略有不同。 authkey生成： 源文件： instal">
+<meta property="og:description" content="DzzOfficeDzzOffice 是一套开源办公套件。 官网： http:&#x2F;&#x2F;dzz.cc&#x2F; github： https:&#x2F;&#x2F;github.com&#x2F;zyx0814&#x2F;dzzoffice&#x2F;releases&#x2F; 版本： DzzOffice v2.02 漏洞分析其加解密模块大致和Discuz!旧版本相同，同样存在authkey被爆破攻击，只是攻击方式略有不同。 authkey生成： 源文件： insta">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2020-03-16T05:06:38.000Z">
-<meta property="article:modified_time" content="2020-03-16T05:41:05.117Z">
+<meta property="article:modified_time" content="2020-03-16T05:56:46.645Z">
 <meta property="article:author" content="zrools">
 <meta property="article:tag" content="渗透测试">
 <meta name="twitter:card" content="summary">
@@ -304,7 +304,7 @@
 <p>官网： <a href="http://dzz.cc/" target="_blank" rel="noopener">http://dzz.cc/</a></p>
 <p>github： <a href="https://github.com/zyx0814/dzzoffice/releases/" target="_blank" rel="noopener">https://github.com/zyx0814/dzzoffice/releases/</a></p>
 <p>版本： DzzOffice v2.02</p>
-<h3 id="漏洞分析"><a href="#漏洞分析" class="headerlink" title="漏洞分析"></a>漏洞分析</h3><p>其加解密模块大致和Discuz旧版本相同，同样存在authkey被爆破攻击，只是攻击方式略有不同。</p>
+<h3 id="漏洞分析"><a href="#漏洞分析" class="headerlink" title="漏洞分析"></a>漏洞分析</h3><p>其加解密模块大致和Discuz!旧版本相同，同样存在authkey被爆破攻击，只是攻击方式略有不同。</p>
 <p>authkey生成：</p>
 <p>源文件： install/index.php</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">$authkey &#x3D; substr(md5($_SERVER[&#39;SERVER_ADDR&#39;].$_SERVER[&#39;HTTP_USER_AGENT&#39;].$dbhost.$dbuser.$dbpw.$dbname.$pconnect.substr($timestamp, 0, 6)), 8, 6).random(10);</span><br><span class="line">$_config[&#39;db&#39;][1][&#39;dbhost&#39;] &#x3D; $dbhost;</span><br><span class="line">$_config[&#39;db&#39;][1][&#39;dbname&#39;] &#x3D; $dbname;</span><br><span class="line">$_config[&#39;db&#39;][1][&#39;dbpw&#39;] &#x3D; $dbpw;</span><br><span class="line">$_config[&#39;db&#39;][1][&#39;dbuser&#39;] &#x3D; $dbuser;</span><br><span class="line">$_config[&#39;db&#39;][1][&#39;port&#39;] &#x3D; $port?$port:&#39;3306&#39;;</span><br><span class="line">$_config[&#39;db&#39;][1][&#39;tablepre&#39;] &#x3D; $tablepre;</span><br><span class="line">$_config[&#39;admincp&#39;][&#39;founder&#39;] &#x3D; (string)$uid;</span><br><span class="line">$_config[&#39;security&#39;][&#39;authkey&#39;] &#x3D; $authkey;</span><br><span class="line">$_config[&#39;cookie&#39;][&#39;cookiepre&#39;] &#x3D; random(4).&#39;_&#39;;</span><br><span class="line">$_config[&#39;memory&#39;][&#39;prefix&#39;] &#x3D; random(6).&#39;_&#39;;</span><br></pre></td></tr></table></figure>
