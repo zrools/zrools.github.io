@@ -336,7 +336,7 @@
 <p>再看下token的生成方式，源文件： /general/login_code_scan.php</p>
 <p><img src="/images/2020/04/23/03.png" alt=""></p>
 <p>通过<code>PHPSESSID</code>从在线用户表<code>user_online</code>中取<code>UID</code>，然后封装数据MD5哈希后存入redis中。</p>
-<h3 id="客户端补丁分析"><a href="#客户端补丁分析" class="headerlink" title="客户端补丁分析"></a>客户端补丁分析</h3><p>客户端和Web端大同小异，只是登录也加了<code>token</code>校验：</p>
+<h3 id="客户端补丁分析"><a href="#客户端补丁分析" class="headerlink" title="客户端补丁分析"></a>客户端补丁分析</h3><p>客户端和Web端大同小异，登录也加了<code>token</code>校验：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;ispirit&#x2F;interface&#x2F;login.php</span><br></pre></td></tr></table></figure>
 
 <p><img src="/images/2020/04/23/04.png" alt=""></p>
