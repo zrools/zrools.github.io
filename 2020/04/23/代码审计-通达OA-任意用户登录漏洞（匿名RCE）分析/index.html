@@ -86,11 +86,17 @@
 <meta property="og:site_name" content="zrools">
 <meta property="og:description" content="官网更新了v11.5版本后，漏洞分析和PoC逐渐浮出了水面，其实这漏洞结合后台的一些功能是可以进一步实现匿名RCE的。 漏洞说明伪造任意用户（含管理员）登录漏洞的触发点在扫码登录功能，服务端只取了UID来做用户身份鉴别，由于UID是整型递增ID，从而导致可以登录指定UID用户（admin的缺省UID为1）。 影响版本通达OA v2017、v11.x &lt; v11.5 支持扫码登录版本。 漏洞分">
 <meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://yoursite.com/images/2020/04/23/01.png">
+<meta property="og:image" content="http://yoursite.com/images/2020/04/23/02.png">
+<meta property="og:image" content="http://yoursite.com/images/2020/04/23/03.png">
+<meta property="og:image" content="http://yoursite.com/images/2020/04/23/04.png">
+<meta property="og:image" content="http://yoursite.com/images/2020/04/23/05.png">
 <meta property="article:published_time" content="2020-04-23T08:10:49.000Z">
-<meta property="article:modified_time" content="2020-04-23T15:23:50.584Z">
+<meta property="article:modified_time" content="2020-04-23T15:35:38.636Z">
 <meta property="article:author" content="zrools">
 <meta property="article:tag" content="代码审计">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://yoursite.com/images/2020/04/23/01.png">
 
 
 
@@ -326,20 +332,20 @@
 </ul>
 <p>Web端通过<code>login_code_check.php</code>取得<code>codeuid</code>等扫码数据后（其实取数据这一步已经产生<code>$_SESSION[&quot;LOGIN_UID&quot;]</code>登录了），再通过Web端发送到<code>logincheck_code.php</code>进行登录。</p>
 <p>Web端登录请求脚本如下：</p>
-<p>/images/2020/04/23/01.png)</p>
+<p><img src="/images/2020/04/23/01.png" alt=""></p>
 <p>可以看到最终的登录数据只发送了<code>UID</code>到服务端，从而导致了任意用户登录。</p>
 <h3 id="Web端补丁分析"><a href="#Web端补丁分析" class="headerlink" title="Web端补丁分析"></a>Web端补丁分析</h3><p>这里对比一下<code>v11.4</code>和<code>v11.5</code>修复前和修复后的源代码：</p>
 <p>源文件： /logincheck_code.php</p>
-<p>/images/2020/04/23/02.png)</p>
+<p><img src="/images/2020/04/23/02.png" alt=""></p>
 <p>修复后的版本对UID进行了初始化，并增加token的校验。</p>
 <p>从redis中取得token并进行<code>td_authcode()</code>解密，然后从中取出<code>UID</code>，避免了前段直接控制<code>UID</code>。</p>
 <p>再看下token的生成方式，源文件： /general/login_code_scan.php</p>
-<p>/images/2020/04/23/03.png)</p>
+<p><img src="/images/2020/04/23/03.png" alt=""></p>
 <p>通过<code>PHPSESSID</code>从在线用户表<code>user_online</code>中取<code>UID</code>，然后封装数据MD5哈希后存入redis中。</p>
 <h3 id="客户端补丁分析"><a href="#客户端补丁分析" class="headerlink" title="客户端补丁分析"></a>客户端补丁分析</h3><p>客户端和Web端大同小异，只是登录也加了<code>token</code>校验：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;ispirit&#x2F;interface&#x2F;login.php</span><br></pre></td></tr></table></figure>
 
-<p>/images/2020/04/23/04.png)</p>
+<p><img src="/images/2020/04/23/04.png" alt=""></p>
 <p>同样是增加了<code>token</code>校验。</p>
 <h2 id="漏洞利用"><a href="#漏洞利用" class="headerlink" title="漏洞利用"></a>漏洞利用</h2><p>手动漏洞复现可以在浏览器直接打断点修改数据或者BurpSuite修改。</p>
 <p>脚本构造数据包的时候只需两步即可：</p>
@@ -361,7 +367,7 @@
 <p>修改脚本里的<code>oa_addr</code>为目标OA地址，成功后会在<code>/api/</code>目录下生成一个<code>test.php</code>，密码为：<code>cmd</code>，<code>GET</code>请求方式。</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ python3 tongda_v11.4_rce_exp.py</span><br><span class="line"></span><br><span class="line">webroot:  C:\\MYOA\\webroot</span><br><span class="line">cookies:  PHPSESSID&#x3D;xxxxx</span><br><span class="line">webshell: (GET) http:&#x2F;&#x2F;192.168.0.3:8080&#x2F;api&#x2F;test.php?cmd&#x3D;ipconfig</span><br></pre></td></tr></table></figure>
 
-<p>/images/2020/04/23/05.png)</p>
+<p><img src="/images/2020/04/23/05.png" alt=""></p>
 <h2 id="扩展思考"><a href="#扩展思考" class="headerlink" title="扩展思考"></a>扩展思考</h2><p>我们脑洞一下这个补丁是否可以绕过：</p>
 <h3 id="认证地址一："><a href="#认证地址一：" class="headerlink" title="认证地址一："></a>认证地址一：</h3><p>源文件： /logincheck_code.php</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$authInfo &#x3D; $redis-&gt;get(&quot;OA:authcode:token:&quot; . $token);</span><br><span class="line"></span><br><span class="line">$Info &#x3D; td_authcode($authInfo, &quot;DECODE&quot;);</span><br></pre></td></tr></table></figure>
