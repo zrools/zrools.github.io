@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="en">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="代码审计," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="官网更新了v11.5版本后，漏洞分析和PoC逐渐浮出了水面，其实这漏洞结合后台的一些功能是可以进一步实现匿名RCE的。 漏洞说明伪造任意用户（含管理员）登录漏洞的触发点在扫码登录功能，服务端只取了UID来做用户身份鉴别，由于UID是整型递增ID，从而导致可以登录指定UID用户（admin的缺省UID为1）。 影响版本通达OA v2017、v11.x &lt; v11.5 支持扫码登录版本。 漏洞分">
+<meta property="og:type" content="article">
+<meta property="og:title" content="代码审计 | 通达OA 任意用户登录漏洞（匿名RCE）分析">
+<meta property="og:url" content="http://yoursite.com/2020/04/23/%E4%BB%A3%E7%A0%81%E5%AE%A1%E8%AE%A1-%E9%80%9A%E8%BE%BEOA-%E4%BB%BB%E6%84%8F%E7%94%A8%E6%88%B7%E7%99%BB%E5%BD%95%E6%BC%8F%E6%B4%9E%EF%BC%88%E5%8C%BF%E5%90%8DRCE%EF%BC%89%E5%88%86%E6%9E%90/index.html">
+<meta property="og:site_name" content="zrools">
+<meta property="og:description" content="官网更新了v11.5版本后，漏洞分析和PoC逐渐浮出了水面，其实这漏洞结合后台的一些功能是可以进一步实现匿名RCE的。 漏洞说明伪造任意用户（含管理员）登录漏洞的触发点在扫码登录功能，服务端只取了UID来做用户身份鉴别，由于UID是整型递增ID，从而导致可以登录指定UID用户（admin的缺省UID为1）。 影响版本通达OA v2017、v11.x &lt; v11.5 支持扫码登录版本。 漏洞分">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2020-04-23T08:10:49.000Z">
+<meta property="article:modified_time" content="2020-04-23T15:23:50.584Z">
+<meta property="article:author" content="zrools">
+<meta property="article:tag" content="代码审计">
+<meta name="twitter:card" content="summary">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: 'Author'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2020/04/23/代码审计-通达OA-任意用户登录漏洞（匿名RCE）分析/"/>
+
+
+
+
+
+  <title>代码审计 | 通达OA 任意用户登录漏洞（匿名RCE）分析 | zrools</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 4.2.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="en">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">zrools</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            Home
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            Archives
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/04/23/%E4%BB%A3%E7%A0%81%E5%AE%A1%E8%AE%A1-%E9%80%9A%E8%BE%BEOA-%E4%BB%BB%E6%84%8F%E7%94%A8%E6%88%B7%E7%99%BB%E5%BD%95%E6%BC%8F%E6%B4%9E%EF%BC%88%E5%8C%BF%E5%90%8DRCE%EF%BC%89%E5%88%86%E6%9E%90/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="zrools">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="zrools">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">代码审计 | 通达OA 任意用户登录漏洞（匿名RCE）分析</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2020-04-23T16:10:49+08:00">
+                2020-04-23
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>官网更新了v11.5版本后，漏洞分析和PoC逐渐浮出了水面，其实这漏洞结合后台的一些功能是可以进一步实现匿名RCE的。</p>
+<h2 id="漏洞说明"><a href="#漏洞说明" class="headerlink" title="漏洞说明"></a>漏洞说明</h2><p>伪造任意用户（含管理员）登录漏洞的触发点在扫码登录功能，服务端只取了UID来做用户身份鉴别，由于UID是整型递增ID，从而导致可以登录指定UID用户（admin的缺省UID为1）。</p>
+<h2 id="影响版本"><a href="#影响版本" class="headerlink" title="影响版本"></a>影响版本</h2><p>通达OA v2017、v11.x &lt; v11.5 支持扫码登录版本。</p>
+<h2 id="漏洞分析"><a href="#漏洞分析" class="headerlink" title="漏洞分析"></a>漏洞分析</h2><p>v11.5更新修复了2个地方：</p>
+<ul>
+<li>客户端扫码登录接口；</li>
+<li>Web端扫码登录接口。</li>
+</ul>
+<h3 id="Web端扫码登录过程"><a href="#Web端扫码登录过程" class="headerlink" title="Web端扫码登录过程"></a>Web端扫码登录过程</h3><p>Web端扫码登录流程大致是这样：</p>
+<ul>
+<li><strong>第一步</strong></li>
+</ul>
+<p>Web端访问 <code>/general/login_code.php?codeuid=随机字符串</code> 生成一个二维码，<code>codeuid</code>作为这个二维码凭证。</p>
+<ul>
+<li><strong>第二步</strong></li>
+</ul>
+<p>Web端通过循环请求<code>/general/login_code_check.php</code>，将<code>codeuid</code>发送到服务端，判断是否有人扫了这个二维码。</p>
+<ul>
+<li><strong>第三步</strong></li>
+</ul>
+<p>移动端扫码这个二维码，然后将<code>codeuid</code>等数据发送到<code>/general/login_code_scan.php</code>服务端进行保存。</p>
+<ul>
+<li><strong>第四步</strong></li>
+</ul>
+<p>Web端通过<code>login_code_check.php</code>取得<code>codeuid</code>等扫码数据后（其实取数据这一步已经产生<code>$_SESSION[&quot;LOGIN_UID&quot;]</code>登录了），再通过Web端发送到<code>logincheck_code.php</code>进行登录。</p>
+<p>Web端登录请求脚本如下：</p>
+<p>/images/2020/04/23/01.png)</p>
+<p>可以看到最终的登录数据只发送了<code>UID</code>到服务端，从而导致了任意用户登录。</p>
+<h3 id="Web端补丁分析"><a href="#Web端补丁分析" class="headerlink" title="Web端补丁分析"></a>Web端补丁分析</h3><p>这里对比一下<code>v11.4</code>和<code>v11.5</code>修复前和修复后的源代码：</p>
+<p>源文件： /logincheck_code.php</p>
+<p>/images/2020/04/23/02.png)</p>
+<p>修复后的版本对UID进行了初始化，并增加token的校验。</p>
+<p>从redis中取得token并进行<code>td_authcode()</code>解密，然后从中取出<code>UID</code>，避免了前段直接控制<code>UID</code>。</p>
+<p>再看下token的生成方式，源文件： /general/login_code_scan.php</p>
+<p>/images/2020/04/23/03.png)</p>
+<p>通过<code>PHPSESSID</code>从在线用户表<code>user_online</code>中取<code>UID</code>，然后封装数据MD5哈希后存入redis中。</p>
+<h3 id="客户端补丁分析"><a href="#客户端补丁分析" class="headerlink" title="客户端补丁分析"></a>客户端补丁分析</h3><p>客户端和Web端大同小异，只是登录也加了<code>token</code>校验：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;ispirit&#x2F;interface&#x2F;login.php</span><br></pre></td></tr></table></figure>
+
+<p>/images/2020/04/23/04.png)</p>
+<p>同样是增加了<code>token</code>校验。</p>
+<h2 id="漏洞利用"><a href="#漏洞利用" class="headerlink" title="漏洞利用"></a>漏洞利用</h2><p>手动漏洞复现可以在浏览器直接打断点修改数据或者BurpSuite修改。</p>
+<p>脚本构造数据包的时候只需两步即可：</p>
+<ul>
+<li>将数据写入缓存： /general/login_code.php</li>
+<li>从缓存读取登录： /logincheck_code.php</li>
+</ul>
+<h3 id="任意用户登录-PoC"><a href="#任意用户登录-PoC" class="headerlink" title="任意用户登录 PoC"></a>任意用户登录 PoC</h3><p>知道了漏洞过程，那么实现PoC就很简单了，以获取Web目录绝对路径为例：</p>
+<ul>
+<li>tongda_v11.4_get_webroot_poc.py</li>
+</ul>
+<p>修改脚本里的<code>oa_addr</code>为目标OA地址，成功后会输出当前OA的安装绝对路径。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ python3 tongda_v11.4_get_webroot_poc.py</span><br><span class="line"></span><br><span class="line">webroot:  C:\\MYOA\\webroot</span><br><span class="line">cookies:  PHPSESSID&#x3D;xxxxx</span><br></pre></td></tr></table></figure>
+
+<h3 id="匿名-RCE-ExP"><a href="#匿名-RCE-ExP" class="headerlink" title="匿名 RCE ExP"></a>匿名 RCE ExP</h3><p>有了后台管理权限和Web目录绝对路径，可以利用MySQL日志进一步写Shell，实现匿名RCE：</p>
+<ul>
+<li>tongda_v11.4_rce_exp.py</li>
+</ul>
+<p>修改脚本里的<code>oa_addr</code>为目标OA地址，成功后会在<code>/api/</code>目录下生成一个<code>test.php</code>，密码为：<code>cmd</code>，<code>GET</code>请求方式。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ python3 tongda_v11.4_rce_exp.py</span><br><span class="line"></span><br><span class="line">webroot:  C:\\MYOA\\webroot</span><br><span class="line">cookies:  PHPSESSID&#x3D;xxxxx</span><br><span class="line">webshell: (GET) http:&#x2F;&#x2F;192.168.0.3:8080&#x2F;api&#x2F;test.php?cmd&#x3D;ipconfig</span><br></pre></td></tr></table></figure>
+
+<p>/images/2020/04/23/05.png)</p>
+<h2 id="扩展思考"><a href="#扩展思考" class="headerlink" title="扩展思考"></a>扩展思考</h2><p>我们脑洞一下这个补丁是否可以绕过：</p>
+<h3 id="认证地址一："><a href="#认证地址一：" class="headerlink" title="认证地址一："></a>认证地址一：</h3><p>源文件： /logincheck_code.php</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">$authInfo &#x3D; $redis-&gt;get(&quot;OA:authcode:token:&quot; . $token);</span><br><span class="line"></span><br><span class="line">$Info &#x3D; td_authcode($authInfo, &quot;DECODE&quot;);</span><br></pre></td></tr></table></figure>
+
+<p>如果我们能找到一个可控的:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">TRedis::redis()-&gt;setex($xxx, $xxx);</span><br></pre></td></tr></table></figure>
+
+<p>而<code>td_authcode()</code>的key是固定的，从而就可以伪造<code>token</code>进行任意用户登录。</p>
+<h3 id="认证地址二："><a href="#认证地址二：" class="headerlink" title="认证地址二："></a>认证地址二：</h3><p>源文件： /ispirit/login_code_check.php</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">$login_codeuid &#x3D; TD::get_cache(&quot;CODE_LOGIN_PC&quot; . $codeuid);</span><br><span class="line"></span><br><span class="line">...</span><br><span class="line"></span><br><span class="line">$code_info &#x3D; TD::get_cache(&quot;CODE_INFO_PC&quot; . $login_codeuid);</span><br><span class="line"></span><br><span class="line">...</span><br><span class="line"></span><br><span class="line">$UID &#x3D; intval($code_info[&quot;uid&quot;]);</span><br></pre></td></tr></table></figure>
+
+<p>如果我们能找到一个可控的：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">TD::set_cache($xxx, $xxx);</span><br></pre></td></tr></table></figure>
+
+<p>也是可以伪造任意用户登录。</p>
+<hr/>
+
+<p><strong>PoC &amp; ExP 传送门：</strong> <a href="https://github.com/zrools/tools/tree/master/python" target="_blank" rel="noopener">https://github.com/zrools/tools/tree/master/python</a></p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/%E4%BB%A3%E7%A0%81%E5%AE%A1%E8%AE%A1/" rel="tag"># 代码审计</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/04/23/%E4%BB%A3%E7%A0%81%E5%AE%A1%E8%AE%A1/" rel="next" title="代码审计">
+                <i class="fa fa-chevron-left"></i> 代码审计
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">zrools</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/%7C%7C%20archive">
+              
+                  <span class="site-state-item-count">10</span>
+                  <span class="site-state-item-name">posts</span>
+                </a>
+              </div>
+            
+
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                
+                  <span class="site-state-item-count">6</span>
+                  <span class="site-state-item-name">tags</span>
+                
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#漏洞说明"><span class="nav-number">1.</span> <span class="nav-text">漏洞说明</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#影响版本"><span class="nav-number">2.</span> <span class="nav-text">影响版本</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#漏洞分析"><span class="nav-number">3.</span> <span class="nav-text">漏洞分析</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Web端扫码登录过程"><span class="nav-number">3.1.</span> <span class="nav-text">Web端扫码登录过程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Web端补丁分析"><span class="nav-number">3.2.</span> <span class="nav-text">Web端补丁分析</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#客户端补丁分析"><span class="nav-number">3.3.</span> <span class="nav-text">客户端补丁分析</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#漏洞利用"><span class="nav-number">4.</span> <span class="nav-text">漏洞利用</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#任意用户登录-PoC"><span class="nav-number">4.1.</span> <span class="nav-text">任意用户登录 PoC</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#匿名-RCE-ExP"><span class="nav-number">4.2.</span> <span class="nav-text">匿名 RCE ExP</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#扩展思考"><span class="nav-number">5.</span> <span class="nav-text">扩展思考</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#认证地址一："><span class="nav-number">5.1.</span> <span class="nav-text">认证地址一：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#认证地址二："><span class="nav-number">5.2.</span> <span class="nav-text">认证地址二：</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">zrools</span>
+
+  
+</div>
+
+
+  <div class="powered-by">Powered by <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a></div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">Theme &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Muse</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

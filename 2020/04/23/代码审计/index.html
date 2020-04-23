@@ -68,7 +68,7 @@
 
 
 
-  <meta name="keywords" content="渗透测试," />
+  <meta name="keywords" content="Hexo, NexT" />
 
 
 
@@ -79,17 +79,14 @@
 
 
 
-<meta name="description" content="类型 端口 内容 备注    FTP 21 文件传输协议，File Transfer Protocol 弱口令、匿名访问、拒绝服务   SSH 22 安全外壳协议， Secure Shell 弱口令、匿名访问、私钥泄漏   Telnet 23 远程登录服务协议 弱口令 匿名访问   Samba 139&#x2F;445(TCP)  137&#x2F;138(UDP) SMB资源共享服务 命令执行(CVE-201">
 <meta property="og:type" content="article">
-<meta property="og:title" content="常见服务端口与利用">
-<meta property="og:url" content="http://yoursite.com/2020/03/11/%E5%B8%B8%E8%A7%81%E6%9C%8D%E5%8A%A1%E7%AB%AF%E5%8F%A3%E4%B8%8E%E5%88%A9%E7%94%A8/index.html">
+<meta property="og:title" content="代码审计">
+<meta property="og:url" content="http://yoursite.com/2020/04/23/%E4%BB%A3%E7%A0%81%E5%AE%A1%E8%AE%A1/index.html">
 <meta property="og:site_name" content="zrools">
-<meta property="og:description" content="类型 端口 内容 备注    FTP 21 文件传输协议，File Transfer Protocol 弱口令、匿名访问、拒绝服务   SSH 22 安全外壳协议， Secure Shell 弱口令、匿名访问、私钥泄漏   Telnet 23 远程登录服务协议 弱口令 匿名访问   Samba 139&#x2F;445(TCP)  137&#x2F;138(UDP) SMB资源共享服务 命令执行(CVE-201">
 <meta property="og:locale" content="en_US">
-<meta property="article:published_time" content="2020-03-11T14:02:40.000Z">
-<meta property="article:modified_time" content="2020-03-11T14:03:51.000Z">
+<meta property="article:published_time" content="2020-04-23T08:10:25.000Z">
+<meta property="article:modified_time" content="2020-04-23T08:10:25.166Z">
 <meta property="article:author" content="zrools">
-<meta property="article:tag" content="渗透测试">
 <meta name="twitter:card" content="summary">
 
 
@@ -120,13 +117,13 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/2020/03/11/常见服务端口与利用/"/>
+  <link rel="canonical" href="http://yoursite.com/2020/04/23/代码审计/"/>
 
 
 
 
 
-  <title>常见服务端口与利用 | zrools</title>
+  <title>代码审计 | zrools</title>
   
 
 
@@ -233,7 +230,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/03/11/%E5%B8%B8%E8%A7%81%E6%9C%8D%E5%8A%A1%E7%AB%AF%E5%8F%A3%E4%B8%8E%E5%88%A9%E7%94%A8/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/04/23/%E4%BB%A3%E7%A0%81%E5%AE%A1%E8%AE%A1/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="zrools">
@@ -250,7 +247,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">常见服务端口与利用</h1>
+          <h1 class="post-title" itemprop="name headline">代码审计</h1>
         
 
         <div class="post-meta">
@@ -262,8 +259,8 @@
               
                 <span class="post-meta-item-text">Posted on</span>
               
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2020-03-11T22:02:40+08:00">
-                2020-03-11
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2020-04-23T16:10:25+08:00">
+                2020-04-23
               </time>
             
 
@@ -300,185 +297,7 @@
       
 
       
-        <table>
-<thead>
-<tr>
-<th>类型</th>
-<th>端口</th>
-<th>内容</th>
-<th>备注</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>FTP</td>
-<td>21</td>
-<td>文件传输协议，File Transfer Protocol</td>
-<td>弱口令、匿名访问、拒绝服务</td>
-</tr>
-<tr>
-<td>SSH</td>
-<td>22</td>
-<td>安全外壳协议， Secure Shell</td>
-<td>弱口令、匿名访问、私钥泄漏</td>
-</tr>
-<tr>
-<td>Telnet</td>
-<td>23</td>
-<td>远程登录服务协议</td>
-<td>弱口令 匿名访问</td>
-</tr>
-<tr>
-<td>Samba</td>
-<td>139/445(TCP) <br> 137/138(UDP)</td>
-<td>SMB资源共享服务</td>
-<td>命令执行(CVE-2017-7494)</td>
-</tr>
-<tr>
-<td>SNMP</td>
-<td>161</td>
-<td>简单网络管理协议</td>
-<td>弱口令</td>
-</tr>
-<tr>
-<td>LADP</td>
-<td>389</td>
-<td>轻型目录访问协议，Lightweight Directory Access Protocol</td>
-<td>匿名访问、LADP注入</td>
-</tr>
-<tr>
-<td>SSL</td>
-<td>443</td>
-<td>安全套接层，Secure Sockets Layer</td>
-<td>OpenSSL心脏出血</td>
-</tr>
-<tr>
-<td>SMB</td>
-<td>445</td>
-<td>信息服务块，Server Messages Block</td>
-<td>MS08-067、MS17-010</td>
-</tr>
-<tr>
-<td>Rsync</td>
-<td>875</td>
-<td>数据镜像备份工具</td>
-<td>匿名访问</td>
-</tr>
-<tr>
-<td>MSSQL</td>
-<td>1433</td>
-<td>SQL Server数据库服务器</td>
-<td>弱口令</td>
-</tr>
-<tr>
-<td>Oracle</td>
-<td>1521</td>
-<td>数据库管理系统</td>
-<td>弱口令</td>
-</tr>
-<tr>
-<td>ZooKeeper</td>
-<td>2181\2888\3888</td>
-<td>分布式应用程序协调服务</td>
-<td>未授权访问</td>
-</tr>
-<tr>
-<td>MySQL</td>
-<td>3306</td>
-<td>关系型数据库管理系统</td>
-<td>弱口令、UDF提权、MOF提权、日志写Shell</td>
-</tr>
-<tr>
-<td>RDP</td>
-<td>3389</td>
-<td>远程桌面协议</td>
-<td>弱口令、CVE2019-0708</td>
-</tr>
-<tr>
-<td>PostgreSQL</td>
-<td>5432</td>
-<td>对象-关系型数据库管理系统</td>
-<td>弱口令</td>
-</tr>
-<tr>
-<td>CouchDB</td>
-<td>5984(HTTP)<br> 6984(HTTPS)</td>
-<td>开源的面向文档的数据库管理系统</td>
-<td>未授权访问</td>
-</tr>
-<tr>
-<td>VNC</td>
-<td>5900</td>
-<td>虚拟网络控制台，Virtual Network Console</td>
-<td>弱口令</td>
-</tr>
-<tr>
-<td>Redis</td>
-<td>6379</td>
-<td>远程字典服务，Remote Dictionary Server</td>
-<td>未授权(getshell、ssh私钥、计划任务)</td>
-</tr>
-<tr>
-<td>Weblogic</td>
-<td>7001/7002</td>
-<td>基于JavaEE架构的中间件</td>
-<td>反序列化、弱口令、SSRF</td>
-</tr>
-<tr>
-<td>JBoss</td>
-<td>8080/8093</td>
-<td>基于JavaEE的应用服务器</td>
-<td>弱口令、反序列化</td>
-</tr>
-<tr>
-<td>Jenkins</td>
-<td>8080</td>
-<td>基于Java的持续集成工具</td>
-<td>弱口令、反序列化</td>
-</tr>
-<tr>
-<td>Tomcat</td>
-<td>8080</td>
-<td>Web 应用服务器</td>
-<td>弱口令</td>
-</tr>
-<tr>
-<td>WebSphere</td>
-<td>9043</td>
-<td>IBM的模块化的平台</td>
-<td>未授权、反序列化、弱口令(admin/password)</td>
-</tr>
-<tr>
-<td>Zabbix</td>
-<td>10051</td>
-<td>SQL注入、弱口令</td>
-<td>弱口令(zabbix/zabbix)、SQL注入</td>
-</tr>
-<tr>
-<td>MemCache</td>
-<td>11211</td>
-<td>分布式的高速缓存系统</td>
-<td>未授权、UDP放大反射</td>
-</tr>
-<tr>
-<td>MongoDB</td>
-<td>27017/27018</td>
-<td>分布式文件存储数据库</td>
-<td>未授权、注入</td>
-</tr>
-<tr>
-<td>SAP</td>
-<td>50000</td>
-<td>System Applications and Products</td>
-<td>命令注入</td>
-</tr>
-<tr>
-<td>Hadoop</td>
-<td>50030/50070</td>
-<td>分布式系统基础架构</td>
-<td>未授权、命令注入</td>
-</tr>
-</tbody></table>
-
+        
       
     </div>
     
@@ -493,12 +312,6 @@
 
     <footer class="post-footer">
       
-        <div class="post-tags">
-          
-            <a href="/tags/%E6%B8%97%E9%80%8F%E6%B5%8B%E8%AF%95/" rel="tag"># 渗透测试</a>
-          
-        </div>
-      
 
       
       
@@ -508,8 +321,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2020/03/09/VulnStack-ATT-CK%E7%BA%A2%E9%98%9F%E8%AF%84%E4%BC%B0%E5%AE%9E%E6%88%98-%E4%B8%80-Writeup/" rel="next" title="VulnStack - ATT&CK红队评估实战(一) Writeup">
-                <i class="fa fa-chevron-left"></i> VulnStack - ATT&CK红队评估实战(一) Writeup
+              <a href="/2020/03/21/hello-world/" rel="next" title="Hello World">
+                <i class="fa fa-chevron-left"></i> Hello World
               </a>
             
           </div>
@@ -518,8 +331,8 @@
 
           <div class="post-nav-prev post-nav-item">
             
-              <a href="/2020/03/16/%E4%BB%A3%E7%A0%81%E5%AE%A1%E8%AE%A1-DzzOffice-%E4%BC%AA%E9%9A%8F%E6%9C%BA%E6%95%B0%E6%94%BB%E5%87%BB/" rel="prev" title="代码审计 | DzzOffice 伪随机数攻击">
-                代码审计 | DzzOffice 伪随机数攻击 <i class="fa fa-chevron-right"></i>
+              <a href="/2020/04/23/%E4%BB%A3%E7%A0%81%E5%AE%A1%E8%AE%A1-%E9%80%9A%E8%BE%BEOA-%E4%BB%BB%E6%84%8F%E7%94%A8%E6%88%B7%E7%99%BB%E5%BD%95%E6%BC%8F%E6%B4%9E%EF%BC%88%E5%8C%BF%E5%90%8DRCE%EF%BC%89%E5%88%86%E6%9E%90/" rel="prev" title="代码审计 | 通达OA 任意用户登录漏洞（匿名RCE）分析">
+                代码审计 | 通达OA 任意用户登录漏洞（匿名RCE）分析 <i class="fa fa-chevron-right"></i>
               </a>
             
           </div>
